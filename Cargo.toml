@@ -1,0 +1,9 @@
+[package]
+name = "analysr"
+version = "0.1.0"
+authors = ["programLyrique <pierre.donat.bouillud@gmail.com>"]
+edition = "2018"
+
+
+[dependencies]
+extendr-api = { git = "https://github.com/extendr/extendr" }
