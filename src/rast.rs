@@ -1,5 +1,6 @@
+use extendr_api::*;
 
-
+#[derive(Debug)]
 pub enum Prog {
     Expr,
     Assign(Expr, Expr)
@@ -8,6 +9,7 @@ pub enum Prog {
 
 // Assign
 
+#[derive(Debug)]
 pub enum Expr {
     Float(f64),
     Int(i32),
@@ -26,6 +28,7 @@ pub enum Expr {
     SubScript(Box<Expr>, SubList)
 }
 
+#[derive(Debug)]
 pub enum Opcode {
     // Arithmetic
     Mul,
@@ -52,4 +55,13 @@ pub enum Opcode {
 
     // Slot access
     SLOT // $, @
+}
+
+
+pub fn sexp_to_ast(sexp : Robj) -> Expr {
+    match sexp.sexptype() {
+        NILSXP => Expr::Null,
+        SYMSXP => Expr::Symbol(sexp.as_str().unwrap()),
+        _ => Expr::Null//...
+    }
 }
