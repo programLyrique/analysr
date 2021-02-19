@@ -2,7 +2,8 @@ use std::env;
 
 use analysr::*;
 
-use extendr_api::*;
+use extendr_api::prelude::*;
+us extendr_engine::*;
 
 fn main() {
 

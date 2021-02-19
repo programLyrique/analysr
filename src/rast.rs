@@ -1,61 +1,34 @@
 use extendr_api::*;
 
 #[derive(Debug)]
-pub enum Prog {
-    Expr,
-    Assign(Expr, Expr)
-}
-// Expr list
-
-// Assign
-
-#[derive(Debug)]
-pub enum Expr {
+pub enum Value {
     Float(f64),
     Int(i32),
     Str(&str),
-    Symbol(&str),
     Null,
-    BinOp(Box<Expr>, Opcode, Box<Expr>),
-    UnOp(Opcode, Box<Expr>),
-    ExprList(Vec<Expr>),
-    Program(Box<Prog>),
-    SubList(Box<Expr>, Vec<Expr>),
+    NA
+}
+// Add NA? Maybe, because veen if it is a boolean, it is often used as a generic value
+
+#[derive(Debug)]
+pub enum Symbol {
+    Sym(&str)
+}
+
+#[derive(Debug)]
+pub enum Expr {
+    Value,
+    Symbol,
+    Statements(Vec<Expr>),
     If(Box<Expr>, Box<Expr>, Box<Expr>),
     For(Box<Expr>, Box<Expr>),
     While(Box<Expr>, Box<Expr>,),
     Repeat(Box<Expr>),
-    SubScript(Box<Expr>, SubList)
+    Call(Box<Expr>, Vec<Expr>),
+    FunctionDef(Box<Expr>, Box<Expr>)
 }
 
-#[derive(Debug)]
-pub enum Opcode {
-    // Arithmetic
-    Mul,
-    Div,
-    Add,
-    Sub,
-    Seq, // :
-    Power, // ^ 
-    Mod, // %% (SPECIAL)
-    // Help operator
-    Help, // ?
-    // Logical operator
-    GT,// >
-    GE,// >=
-    LT,// <
-    LE,// <=
-    EQ, // ==
-    NE, // !=
-    AND, // &
-    OR, // |
-    AND2, // &&
-    OR2, // ||
-    NOT, // !
 
-    // Slot access
-    SLOT // $, @
-}
 
 
 pub fn sexp_to_ast(sexp : Robj) -> Expr {
