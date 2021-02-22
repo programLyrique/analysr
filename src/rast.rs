@@ -33,7 +33,7 @@ pub enum Expr {
 
 
 pub fn sexp_to_ast(sexp : Robj) -> Expr {
-    println!("Sexptype: {:?}", sexp);
+    //println!("Sexptype: {:?}", sexp);
     match sexp.rtype() {
         RType::Integer | RType::Logical | RType::Real | RType::Complex | RType::String if sexp.is_na() => Expr::Value(Value::NA),
         RType::Integer => Expr::Value(Value::Int(sexp.as_integer().unwrap())),
@@ -41,7 +41,7 @@ pub fn sexp_to_ast(sexp : Robj) -> Expr {
         RType::Logical => Expr::Value(Value::Bool(sexp.as_bool().unwrap())),
         RType::String => Expr::Value(Value::Str(sexp.as_str().unwrap().to_string())),
         RType::Null => Expr::Value(Value::Null),
-        RType::Symbol => Expr::Symbol(Symbol::Sym(sexp.as_symbol().unwrap().to_string())),
+        RType::Symbol => Expr::Symbol(Symbol::Sym(sexp.as_symbol().unwrap().0.to_string())),
         RType::Language => {
             let mut lang = sexp.as_pairlist_iter().unwrap();
             let func_name = Box::new(sexp_to_ast(lang.next().unwrap()));
