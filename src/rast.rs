@@ -2,23 +2,24 @@ use extendr_api::*;
 
 #[derive(Debug)]
 pub enum Value {
-    Float(f64),
+    Real(f64),
     Int(i32),
-    Str(&str),
+    Str(String),
+    Bool(bool),
     Null,
-    NA
+    NA // Or one NA per type? Or Na(NA) where NA is another Enum
 }
 // Add NA? Maybe, because veen if it is a boolean, it is often used as a generic value
 
 #[derive(Debug)]
 pub enum Symbol {
-    Sym(&str)
+    Sym(String)
 }
 
 #[derive(Debug)]
 pub enum Expr {
-    Value,
-    Symbol,
+    Value(Value),
+    Symbol(Symbol),
     Statements(Vec<Expr>),
     If(Box<Expr>, Box<Expr>, Box<Expr>),
     For(Box<Expr>, Box<Expr>),
@@ -32,9 +33,24 @@ pub enum Expr {
 
 
 pub fn sexp_to_ast(sexp : Robj) -> Expr {
-    match sexp.sexptype() {
-        NILSXP => Expr::Null,
-        SYMSXP => Expr::Symbol(sexp.as_str().unwrap()),
-        _ => Expr::Null//...
+    println!("Sexptype: {:?}", sexp);
+    match sexp.rtype() {
+        RType::Integer | RType::Logical | RType::Real | RType::Complex | RType::String if sexp.is_na() => Expr::Value(Value::NA),
+        RType::Integer => Expr::Value(Value::Int(sexp.as_integer().unwrap())),
+        RType::Real => Expr::Value(Value::Real(sexp.as_real().unwrap())),
+        RType::Logical => Expr::Value(Value::Bool(sexp.as_bool().unwrap())),
+        RType::String => Expr::Value(Value::Str(sexp.as_str().unwrap().to_string())),
+        RType::Null => Expr::Value(Value::Null),
+        RType::Symbol => Expr::Symbol(Symbol::Sym(sexp.as_symbol().unwrap().to_string())),
+        RType::Language => {
+            let mut lang = sexp.as_pairlist_iter().unwrap();
+            let func_name = Box::new(sexp_to_ast(lang.next().unwrap()));
+            let args = lang.map(sexp_to_ast).collect();
+            Expr::Call(func_name, args)
+        }
+        RType::Expression => {
+            Expr::Statements(sexp.as_list_iter().unwrap().map(sexp_to_ast).collect())
+        }
+        _ => Expr::Value(Value::Null)//...
     }
 }

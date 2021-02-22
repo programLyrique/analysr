@@ -3,7 +3,7 @@ use std::env;
 use analysr::*;
 
 use extendr_api::prelude::*;
-us extendr_engine::*;
+use extendr_engine::*;
 
 fn main() {
 
