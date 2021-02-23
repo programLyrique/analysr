@@ -20,13 +20,15 @@ pub enum Expr {
     Symbol(Symbol),
     Statements(Vec<Expr>),
     If(Box<Expr>, Box<Expr>, Box<Expr>),
-    For(Box<Expr>, Box<Expr>),
+    For(Symbol, Box<Expr>, Box<Expr>),
     While(Box<Expr>, Box<Expr>,),
     Repeat(Box<Expr>),
     Call(Box<Expr>, Vec<Expr>),
     FunctionDef(Box<Expr>, Box<Expr>),
     ArgList(Vec<Symbol>),
-    Empty
+    Break,
+    Next,
+    Empty //Rather use an Option type?
 }
 
 
@@ -50,6 +52,7 @@ pub fn sexp_to_ast(sexp : Robj) -> Expr {
             if let Expr::Symbol(Symbol(ref s)) = func_name {
                 match s.as_str() {
                     "function" => {
+                        // drain or swaP-remove or into_inter?
                         let mut args_drain = args.drain(0..1);// First argument is a src ref. We do not care about it
                         let arg_list = args_drain.next().unwrap();
                         let body = args_drain.next().unwrap();
@@ -62,9 +65,32 @@ pub fn sexp_to_ast(sexp : Robj) -> Expr {
                         let body2 = args_drain.next().unwrap_or(Expr::Empty);//For if without an else block
                         Expr::If(Box::new(cond), Box::new(body1), Box::new(body2))
                     },
+                    "while" => {
+                        let mut args_drain = args.drain(..);
+                        let cond = args_drain.next().unwrap();
+                        let body = args_drain.next().unwrap();
+                        Expr::While(Box::new(cond), Box::new(body))
+                    },
+                    "for" => {
+                        let mut args_drain = args.drain(..);
+                        let iter_var = if let Expr::Symbol(v) = args_drain.next().unwrap() {
+                            v
+                        } else {
+                            unreachable!();
+                        };
+                        let seq = args_drain.next().unwrap();
+                        let body = args_drain.next().unwrap();
+                        Expr::For(iter_var, Box::new(seq), Box::new(body))
+                    },
+                    "repeat" => {
+                        let body = args.drain(..).next().unwrap();
+                        Expr::Repeat(Box::new(body))
+                    }
                     "{" => {
                         Expr::Statements(args)
-                    }
+                    },
+                    "break" => Expr::Break,
+                    "next" => Expr::Next,
                     _ => Expr::Call(Box::new(func_name), args)
                 }
             }
