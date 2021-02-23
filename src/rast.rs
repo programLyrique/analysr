@@ -1,6 +1,6 @@
 use extendr_api::*;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Value {
     Real(f64),
     Int(i32),
@@ -11,10 +11,10 @@ pub enum Value {
 }
 // Add NA? Maybe, because veen if it is a boolean, it is often used as a generic value
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Symbol(String);
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Expr {
     Value(Value),
     Symbol(Symbol),
@@ -25,7 +25,8 @@ pub enum Expr {
     Repeat(Box<Expr>),
     Call(Box<Expr>, Vec<Expr>),
     FunctionDef(Box<Expr>, Box<Expr>),
-    ArgList(Vec<Symbol>)
+    ArgList(Vec<Symbol>),
+    Empty
 }
 
 
@@ -49,11 +50,21 @@ pub fn sexp_to_ast(sexp : Robj) -> Expr {
             if let Expr::Symbol(Symbol(ref s)) = func_name {
                 match s.as_str() {
                     "function" => {
-                        let mut args_drain = args.drain(1..2);// First argument is a src ref. We do not care about it
+                        let mut args_drain = args.drain(0..1);// First argument is a src ref. We do not care about it
                         let arg_list = args_drain.next().unwrap();
                         let body = args_drain.next().unwrap();
                         Expr::FunctionDef(Box::new(arg_list), Box::new(body))
                     },
+                    "if" => {
+                        let mut args_drain = args.drain(..);
+                        let cond = args_drain.next().unwrap();
+                        let body1 = args_drain.next().unwrap();
+                        let body2 = args_drain.next().unwrap_or(Expr::Empty);//For if without an else block
+                        Expr::If(Box::new(cond), Box::new(body1), Box::new(body2))
+                    },
+                    "{" => {
+                        Expr::Statements(args)
+                    }
                     _ => Expr::Call(Box::new(func_name), args)
                 }
             }
@@ -68,5 +79,17 @@ pub fn sexp_to_ast(sexp : Robj) -> Expr {
             Expr::ArgList(sexp.as_pairlist_tag_iter().unwrap().map(|arg| Symbol(arg.to_string())).collect())
         }
         _ => Expr::Value(Value::Null)//...
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn values() {
+        assert_eq!(sexp_to_ast(R!(NA).unwrap()), super::Expr::Value(Value::NA));
+        assert_eq!(sexp_to_ast(r!(1)), super::Expr::Value(Value::Int(1)))
     }
 }
