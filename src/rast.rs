@@ -114,11 +114,20 @@ pub fn sexp_to_ast(sexp : Robj) -> Expr {
 mod tests {
     use super::*;
     use extendr_engine::*;
+    use ctor::*;
+
+    #[ctor]
+    fn init() {
+        start_r();
+    }
+
 
     #[test]
     fn values() {
-        start_r();
+        //start_r();
         assert_eq!(sexp_to_ast(R!(NA).unwrap()), super::Expr::Value(Value::NA));
-        assert_eq!(sexp_to_ast(r!(1)), super::Expr::Value(Value::Int(1)))
+        assert_eq!(sexp_to_ast(R!(1L).unwrap()), super::Expr::Value(Value::Int(1)));
+        assert_eq!(sexp_to_ast(R!(1).unwrap()), super::Expr::Value(Value::Real(1.0)));
+        assert_eq!(sexp_to_ast(R!("hello world").unwrap()), super::Expr::Value(Value::Str("hello world".to_string())))
     }
 }
