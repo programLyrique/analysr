@@ -14,6 +14,7 @@ pub enum Value {
 #[derive(Debug, PartialEq)]
 pub struct Symbol(String);
 
+// TODO: add BinaryOp?
 #[derive(Debug, PartialEq)]
 pub enum Expr {
     Value(Value),
@@ -97,7 +98,11 @@ pub fn sexp_to_ast(sexp: Robj) -> Expr {
             }
         }
         RType::Expression => {
-            let mut statements = sexp.as_list_iter().unwrap().map(sexp_to_ast).collect::<Vec<_>>();
+            let mut statements = sexp
+                .as_list_iter()
+                .unwrap()
+                .map(sexp_to_ast)
+                .collect::<Vec<_>>();
             // Simplify if there are only one statement in an expression
             if statements.len() == 1 {
                 statements.remove(0)
@@ -115,7 +120,7 @@ pub fn sexp_to_ast(sexp: Robj) -> Expr {
                     .collect(),
             )
         }
-        _ => Expr::Value(Value::Null), //...
+        _ => panic!(format!("Unsupported: {:?}\n", sexp)),
     }
 }
 
@@ -128,7 +133,7 @@ mod tests {
 
     #[ctor]
     fn init() {
-        // It will be initialized beofre any thread creation
+        // It will be initialized before any thread creation
         // We need it because we can only start R once, it is not reentrant.
         start_r();
     }
@@ -156,5 +161,26 @@ mod tests {
             sexp_to_ast(parse("x").unwrap()),
             super::Expr::Symbol(super::Symbol("x".to_string()))
         );
+    }
+
+    #[test]
+    fn controls() {
+        assert_eq!(
+            format!("{:?}", sexp_to_ast(parse("if(x == 1) 1 else 2").unwrap())),
+            "If(Call(Symbol(Symbol(\"==\")), [Symbol(Symbol(\"x\")), Value(Real(1.0))]), Value(Real(1.0)), Value(Real(2.0)))");
+        
+            assert_eq!(
+            format!("{:?}", sexp_to_ast(parse("while(1) { print(\"hello\") }").unwrap())),   
+            "While(Value(Real(1.0)), Statements([Call(Symbol(Symbol(\"print\")), [Value(Str(\"hello\"))])]))" );
+
+        assert_eq!(
+            format!("{:?}", sexp_to_ast(parse("for(i in 1:10) { i + 5 }").unwrap())), 
+            "For(Symbol(\"i\"), Call(Symbol(Symbol(\":\")), [Value(Real(1.0)), Value(Real(10.0))]), Statements([Call(Symbol(Symbol(\"+\")), [Symbol(Symbol(\"i\")), Value(Real(5.0))])]))"
+        );
+
+        assert_eq!(
+            format!("{:?}", sexp_to_ast(parse("repeat { 1 + 1 }").unwrap())),
+            "Repeat(Statements([Call(Symbol(Symbol(\"+\")), [Value(Real(1.0)), Value(Real(1.0))])]))"
+        )
     }
 }
