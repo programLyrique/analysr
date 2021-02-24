@@ -12,7 +12,7 @@ pub enum Value {
 // Add NA? Maybe, because veen if it is a boolean, it is often used as a generic value
 
 #[derive(Debug, PartialEq)]
-pub struct Symbol(String);
+pub struct Symbol(String);// TODO: this is ugly. Rather directly put a String in the Expr enum
 
 // TODO: add BinaryOp?
 #[derive(Debug, PartialEq)]
