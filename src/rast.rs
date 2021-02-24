@@ -1,5 +1,6 @@
 use extendr_api::*;
 
+
 #[derive(Debug, PartialEq)]
 pub enum Value {
     Real(f64),
@@ -52,7 +53,7 @@ pub fn sexp_to_ast(sexp : Robj) -> Expr {
             if let Expr::Symbol(Symbol(ref s)) = func_name {
                 match s.as_str() {
                     "function" => {
-                        // drain or swaP-remove or into_inter?
+                        // drain or swap-remove or into_inter?
                         let mut args_drain = args.drain(0..1);// First argument is a src ref. We do not care about it
                         let arg_list = args_drain.next().unwrap();
                         let body = args_drain.next().unwrap();
@@ -112,9 +113,11 @@ pub fn sexp_to_ast(sexp : Robj) -> Expr {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use extendr_engine::*;
 
     #[test]
     fn values() {
+        start_r();
         assert_eq!(sexp_to_ast(R!(NA).unwrap()), super::Expr::Value(Value::NA));
         assert_eq!(sexp_to_ast(r!(1)), super::Expr::Value(Value::Int(1)))
     }
