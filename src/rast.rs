@@ -9,24 +9,22 @@ pub enum Value {
     Null,
     NA, // Or one NA per type? Or Na(NA) where NA is another Enum
 }
-// Add NA? Maybe, because veen if it is a boolean, it is often used as a generic value
+// Add NA? Maybe, because even if it is a boolean, it is often used as a generic value
 
-#[derive(Debug, PartialEq)]
-pub struct Symbol(String);// TODO: this is ugly. Rather directly put a String in the Expr enum
 
 // TODO: add BinaryOp?
 #[derive(Debug, PartialEq)]
 pub enum Expr {
     Value(Value),
-    Symbol(Symbol),
+    Symbol(String),
     Statements(Vec<Expr>),
     If(Box<Expr>, Box<Expr>, Box<Expr>),
-    For(Symbol, Box<Expr>, Box<Expr>),
+    For(String, Box<Expr>, Box<Expr>),
     While(Box<Expr>, Box<Expr>),
     Repeat(Box<Expr>),
     Call(Box<Expr>, Vec<Expr>),
     FunctionDef(Box<Expr>, Box<Expr>),
-    ArgList(Vec<Symbol>),
+    ArgList(Vec<String>),
     Break,
     Next,
     Empty, //Rather use an Option type?
@@ -45,13 +43,13 @@ pub fn sexp_to_ast(sexp: Robj) -> Expr {
         RType::Logical => Expr::Value(Value::Bool(sexp.as_bool().unwrap())),
         RType::String => Expr::Value(Value::Str(sexp.as_str().unwrap().to_string())),
         RType::Null => Expr::Value(Value::Null),
-        RType::Symbol => Expr::Symbol(Symbol(sexp.as_symbol().unwrap().0.to_string())),
+        RType::Symbol => Expr::Symbol(sexp.as_symbol().unwrap().0.to_string()),
         RType::Language => {
             let mut lang = sexp.as_pairlist_iter().unwrap();
             let func_name = sexp_to_ast(lang.next().unwrap());
             let mut args = lang.map(sexp_to_ast).collect::<Vec<_>>();
 
-            if let Expr::Symbol(Symbol(ref s)) = func_name {
+            if let Expr::Symbol(ref s) = func_name {
                 match s.as_str() {
                     "function" => {
                         // drain or swap-remove or into_inter?
@@ -116,7 +114,7 @@ pub fn sexp_to_ast(sexp: Robj) -> Expr {
             Expr::ArgList(
                 sexp.as_pairlist_tag_iter()
                     .unwrap()
-                    .map(|arg| Symbol(arg.to_string()))
+                    .map(|arg| arg.to_string())
                     .collect(),
             )
         }
@@ -159,7 +157,7 @@ mod tests {
     fn symbol() {
         assert_eq!(
             sexp_to_ast(parse("x").unwrap()),
-            super::Expr::Symbol(super::Symbol("x".to_string()))
+            super::Expr::Symbol("x".to_string())
         );
     }
 
@@ -167,20 +165,20 @@ mod tests {
     fn controls() {
         assert_eq!(
             format!("{:?}", sexp_to_ast(parse("if(x == 1) 1 else 2").unwrap())),
-            "If(Call(Symbol(Symbol(\"==\")), [Symbol(Symbol(\"x\")), Value(Real(1.0))]), Value(Real(1.0)), Value(Real(2.0)))");
+            "If(Call(Symbol(\"==\"), [Symbol(\"x\"), Value(Real(1.0))]), Value(Real(1.0)), Value(Real(2.0)))");
         
             assert_eq!(
             format!("{:?}", sexp_to_ast(parse("while(1) { print(\"hello\") }").unwrap())),   
-            "While(Value(Real(1.0)), Statements([Call(Symbol(Symbol(\"print\")), [Value(Str(\"hello\"))])]))" );
+            "While(Value(Real(1.0)), Statements([Call(Symbol(\"print\"), [Value(Str(\"hello\"))])]))" );
 
         assert_eq!(
             format!("{:?}", sexp_to_ast(parse("for(i in 1:10) { i + 5 }").unwrap())), 
-            "For(Symbol(\"i\"), Call(Symbol(Symbol(\":\")), [Value(Real(1.0)), Value(Real(10.0))]), Statements([Call(Symbol(Symbol(\"+\")), [Symbol(Symbol(\"i\")), Value(Real(5.0))])]))"
+            "For(\"i\", Call(Symbol(\":\"), [Value(Real(1.0)), Value(Real(10.0))]), Statements([Call(Symbol(\"+\"), [Symbol(\"i\"), Value(Real(5.0))])]))"
         );
 
         assert_eq!(
             format!("{:?}", sexp_to_ast(parse("repeat { 1 + 1 }").unwrap())),
-            "Repeat(Statements([Call(Symbol(Symbol(\"+\")), [Value(Real(1.0)), Value(Real(1.0))])]))"
+            "Repeat(Statements([Call(Symbol(\"+\"), [Value(Real(1.0)), Value(Real(1.0))])]))"
         )
     }
 }
