@@ -4,7 +4,8 @@ use extendr_api::*;
 use extendr_api::functions::parse;
 
 mod rast;
-
+mod simplify;
+mod counters;
 
 
 pub fn parse_file(filename: &str) -> rast::Expr

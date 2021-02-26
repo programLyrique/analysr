@@ -30,6 +30,8 @@ pub enum Expr {
     Empty, //Rather use an Option type?
 }
 
+
+/// Transform a SEXP into a more convenient AST
 pub fn sexp_to_ast(sexp: Robj) -> Expr {
     //println!("Sexptype: {:?}", sexp);
     match sexp.rtype() {
